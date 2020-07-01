@@ -4,7 +4,9 @@ import argparse
 import asyncio
 import logging
 import os
+import evdev
 
+from evdev import ecodes
 from aioconsole import ainput
 
 from joycontrol import logging_default as log, utils
@@ -167,6 +169,13 @@ async def mash_button(controller_state, button, interval):
     # await future to trigger exceptions in case something went wrong
     await user_input
 
+async def button_press(controller_state, button):
+    controller_state.button_state.set_button(button)
+    await controller_state.send()
+
+async def button_release(controller_state, button):
+    controller_state.button_state.set_button(button, pushed=False)
+    await controller_state.send()
 
 async def _main(args):
     # parse the spi flash
@@ -247,11 +256,96 @@ async def _main(args):
         if args.nfc is not None:
             await nfc(args.nfc)
 
+        device = evdev.InputDevice("/dev/input/event2")
+        caps = device.capabilities()
         try:
-            await cli.run()
+            async for event in device.async_read_loop():
+                if event.type == ecodes.EV_ABS:
+                    if event.code == 0:
+                        controller_state.l_stick_state.set_h(event.value//16+2048)
+                        await controller_state.send()
+                    elif event.code == 1:
+                        controller_state.l_stick_state.set_v(-(event.value-15)//16+2047)
+                        await controller_state.send()
+                elif event.type == ecodes.EV_KEY:
+                    logger.info(event.code)
+                    logger.info(' value ')
+                    logger.info(event.value)
+                    if event.code == 304:
+                        if event.value == 1:
+                            await button_press(controller_state, 'b')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'b')
+                    elif event.code == 305:
+                        if event.value == 1:
+                            await button_press(controller_state, 'a')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'a')
+                    elif event.code == 308:
+                        if event.value == 1:
+                            await button_press(controller_state, 'x')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'x')
+                    elif event.code == 307:
+                        if event.value == 1:
+                            await button_press(controller_state, 'y')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'y')
+                    elif event.code == 704:
+                        if event.value == 1:
+                            await button_press(controller_state, 'left')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'left')
+                    elif event.code == 705:
+                        if event.value == 1:
+                            await button_press(controller_state, 'right')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'right')
+                    elif event.code == 706:
+                        if event.value == 1:
+                            await button_press(controller_state, 'up')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'up')
+                    elif event.code == 707:
+                        if event.value == 1:
+                            await button_press(controller_state, 'down')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'down')
+                    elif event.code == 311:
+                        if event.value == 1:
+                            await button_press(controller_state, 'r')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'r')
+                    elif event.code == 310:
+                        if event.value == 1:
+                            await button_press(controller_state, 'l')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'l')
+                    elif event.code == 313:
+                        if event.value == 1:
+                            await button_press(controller_state, 'zr')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'zr')
+                    elif event.code == 312:
+                        if event.value == 1:
+                            await button_press(controller_state, 'zl')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'zl')
+                    elif event.code == 317:
+                        if event.value == 1:
+                            await button_press(controller_state, 'l_stick')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'l_stick')
+#            await cli.run(yttt)
         finally:
             logger.info('Stopping communication...')
             await transport.close()
+
+#        try:
+#            await cli.run()
+#        finally:
+#            logger.info('Stopping communication...')
+#            await transport.close()
 
 
 if __name__ == '__main__':
