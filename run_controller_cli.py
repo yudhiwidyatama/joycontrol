@@ -267,6 +267,12 @@ async def _main(args):
                     elif event.code == 1:
                         controller_state.l_stick_state.set_v(-(event.value-15)//16+2047)
                         await controller_state.send()
+                    elif event.code == 3:
+                        controller_state.r_stick_state.set_h(event.value//16+2048)
+                        await controller_state.send()
+                    elif event.code == 4:
+                        controller_state.r_stick_state.set_v(-(event.value-15)//16+2047)
+                        await controller_state.send()
                 elif event.type == ecodes.EV_KEY:
                     logger.info(event.code)
                     logger.info(' value ')
@@ -336,7 +342,23 @@ async def _main(args):
                             await button_press(controller_state, 'l_stick')
                         elif event.value == 0:
                             await button_release(controller_state, 'l_stick')
+                    elif event.code == 318:
+                        if event.value == 1:
+                            await button_press(controller_state, 'r_stick')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'r_stick')
 #            await cli.run(yttt)
+                    elif event.code == 315:
+                        if event.value == 1:
+                            await button_press(controller_state, 'plus')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'plus')
+                    elif event.code == 314:
+                        if event.value == 1:
+                            await button_press(controller_state, 'minus')
+                        elif event.value == 0:
+                            await button_release(controller_state, 'minus')
+
         finally:
             logger.info('Stopping communication...')
             await transport.close()
