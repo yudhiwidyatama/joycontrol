@@ -284,9 +284,12 @@ async def _main(args):
                             await button_release(controller_state, 'b')
                     elif event.code == 305:
                         if event.value == 1:
-                            await button_press(controller_state, 'a')
+                            button_press(controller_state, 'a')
+                            if controller_state.button_state.get_button('zr'):
+                                button_press(controller_state, 'home') 
                         elif event.value == 0:
-                            await button_release(controller_state, 'a')
+                            button_release(controller_state, 'a')
+                            button_release(controller_state, 'home')
                     elif event.code == 308:
                         if event.value == 1:
                             await button_press(controller_state, 'x')
