@@ -256,7 +256,7 @@ async def _main(args):
         if args.nfc is not None:
             await nfc(args.nfc)
 
-        device = evdev.InputDevice("/dev/input/event2")
+        device = evdev.InputDevice("/dev/input/event0")
         caps = device.capabilities()
         try:
             async for event in device.async_read_loop():
@@ -285,8 +285,11 @@ async def _main(args):
                     elif event.code == 305:
                         if event.value == 1:
                             await button_press(controller_state, 'a')
+                            if controller_state.button_state.get_button('zr'):
+                                await button_press(controller_state, 'home') 
                         elif event.value == 0:
                             await button_release(controller_state, 'a')
+                            await button_release(controller_state, 'home')
                     elif event.code == 308:
                         if event.value == 1:
                             await button_press(controller_state, 'x')
