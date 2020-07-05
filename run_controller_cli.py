@@ -259,6 +259,8 @@ async def _main(args):
         device = evdev.InputDevice("/dev/input/event2")
         caps = device.capabilities()
         try:
+            t1 = time.perf_counter()
+            cnt = 0
             async for event in device.async_read_loop():
                 if event.type == ecodes.EV_ABS:
                     if event.code == 0:
@@ -284,12 +286,12 @@ async def _main(args):
                             await button_release(controller_state, 'b')
                     elif event.code == 305:
                         if event.value == 1:
-                            button_press(controller_state, 'a')
+                            await button_press(controller_state, 'a')
                             if controller_state.button_state.get_button('zr'):
-                                button_press(controller_state, 'home') 
+                                await button_press(controller_state, 'home') 
                         elif event.value == 0:
-                            button_release(controller_state, 'a')
-                            button_release(controller_state, 'home')
+                            await button_release(controller_state, 'a')
+                            await button_release(controller_state, 'home')
                     elif event.code == 308:
                         if event.value == 1:
                             await button_press(controller_state, 'x')
@@ -361,7 +363,15 @@ async def _main(args):
                             await button_press(controller_state, 'minus')
                         elif event.value == 0:
                             await button_release(controller_state, 'minus')
-
+                cnt = cnt + 1
+                if cnt > 50:
+                    cnt = 0
+                    t2 = time.perf_counter()
+                    deltaT = t2-t1
+                    freq = 50.00/deltaT
+                    str = " 50 event takes  " + format(deltaT,'.2f') + " secs freq = " + format(freq,'.2f')
+                    logger.info(str)
+                    t1 = t2
         finally:
             logger.info('Stopping communication...')
             await transport.close()
