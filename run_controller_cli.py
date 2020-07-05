@@ -174,12 +174,12 @@ async def button_press(controller_state, button):
     controller_state.button_state.set_button(button)
     await controller_state.send()
 
-def button_set_state(controller_state, button, pushed):
-    controller_state.button_state.set_button(button, pushed)
+def button_set_state(controller_state, button, event):
+    controller_state.button_state.set_button(button, bool(event.value == 1))
 
 async def sync_controller(controller_state):
     await controller_state.send()
-    
+
 async def button_release(controller_state, button):
     controller_state.button_state.set_button(button, pushed=False)
     await controller_state.send()
@@ -262,6 +262,24 @@ async def _main(args):
 
         if args.nfc is not None:
             await nfc(args.nfc)
+        eventToButton = {
+            304: 'b',
+            305: 'a',
+            307: 'y',
+            308: 'x',
+            704: 'left',
+            705: 'right',
+            706: 'up',
+            707: 'down',
+            311: 'r',
+            310: 'l',
+            312: 'zl',
+            313: 'zr',
+            314: 'minus',
+            315: 'plus',
+            317: 'l_stick',
+            318: 'r_stick',
+        }
 
         device = evdev.InputDevice("/dev/input/event2")
         caps = device.capabilities()
@@ -281,93 +299,16 @@ async def _main(args):
                     elif event.code == 4:
                         controller_state.r_stick_state.set_v(-(event.value-15)//22+2047)
                 elif event.type == ecodes.EV_KEY:
-                    # logger.info(event.code)
-                    # logger.info(' value ')
-                    # logger.info(event.value)
-                    if event.code == 304:
-                        if event.value == 1:
-                            await button_press(controller_state, 'b')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'b')
-                    elif event.code == 305:
-                        if event.value == 1:
-                            await button_press(controller_state, 'a')
-                            if controller_state.button_state.get_button('zr'):
-                                await button_press(controller_state, 'home') 
-                        elif event.value == 0:
-                            await button_release(controller_state, 'a')
-                            await button_release(controller_state, 'home')
-                    elif event.code == 308:
-                        if event.value == 1:
-                            await button_press(controller_state, 'x')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'x')
-                    elif event.code == 307:
-                        if event.value == 1:
-                            await button_press(controller_state, 'y')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'y')
-                    elif event.code == 704:
-                        if event.value == 1:
-                            await button_press(controller_state, 'left')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'left')
-                    elif event.code == 705:
-                        if event.value == 1:
-                            await button_press(controller_state, 'right')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'right')
-                    elif event.code == 706:
-                        if event.value == 1:
-                            await button_press(controller_state, 'up')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'up')
-                    elif event.code == 707:
-                        if event.value == 1:
-                            await button_press(controller_state, 'down')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'down')
-                    elif event.code == 311:
-                        if event.value == 1:
-                            await button_press(controller_state, 'r')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'r')
-                    elif event.code == 310:
-                        if event.value == 1:
-                            await button_press(controller_state, 'l')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'l')
-                    elif event.code == 313:
-                        if event.value == 1:
-                            await button_press(controller_state, 'zr')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'zr')
-                    elif event.code == 312:
-                        if event.value == 1:
-                            await button_press(controller_state, 'zl')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'zl')
-                    elif event.code == 317:
-                        if event.value == 1:
-                            await button_press(controller_state, 'l_stick')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'l_stick')
-                    elif event.code == 318:
-                        if event.value == 1:
-                            await button_press(controller_state, 'r_stick')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'r_stick')
-#            await cli.run(yttt)
-                    elif event.code == 315:
-                        if event.value == 1:
-                            await button_press(controller_state, 'plus')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'plus')
-                    elif event.code == 314:
-                        if event.value == 1:
-                            await button_press(controller_state, 'minus')
-                        elif event.value == 0:
-                            await button_release(controller_state, 'minus')
+                    if event.code in eventToButton:
+                        buttonCode = eventToButton[event.code]
+                        button_set_state(controller_state,buttonCode, event)
+                        if event.code == 305:
+                            if event.value == 1:
+                                if controller_state.button_state.get_button('zr'):
+                                    button_set_state(controller_state,'home', event)
+                            else:
+                                button_set_state(controller_state,'home', event)
+                        lasttask = asyncio.ensure_future(sync_controller(controller_state))
                 cnt = cnt + 1
                 if cnt > 50:
                     cnt = 0
