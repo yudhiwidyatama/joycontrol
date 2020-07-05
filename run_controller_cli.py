@@ -270,13 +270,13 @@ async def _main(args):
                     await controller_state.send()
                 if event.type == ecodes.EV_ABS:
                     if event.code == 0:
-                        controller_state.l_stick_state.set_h(event.value//16+2048)
+                        controller_state.l_stick_state.set_h(event.value//22+2048)
                     elif event.code == 1:
-                        controller_state.l_stick_state.set_v(-(event.value-15)//16+2047)
+                        controller_state.l_stick_state.set_v(-(event.value-15)//22+2047)
                     elif event.code == 3:
-                        controller_state.r_stick_state.set_h(event.value//16+2048)
+                        controller_state.r_stick_state.set_h(event.value//22+2048)
                     elif event.code == 4:
-                        controller_state.r_stick_state.set_v(-(event.value-15)//16+2047)
+                        controller_state.r_stick_state.set_v(-(event.value-15)//22+2047)
                 elif event.type == ecodes.EV_KEY:
                     # logger.info(event.code)
                     # logger.info(' value ')
