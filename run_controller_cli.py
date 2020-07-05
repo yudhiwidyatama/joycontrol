@@ -177,6 +177,9 @@ async def button_press(controller_state, button):
 def button_set_state(controller_state, button, pushed):
     controller_state.button_state.set_button(button, pushed)
 
+async def sync_controller(controller_state):
+    await controller_state.send()
+    
 async def button_release(controller_state, button):
     controller_state.button_state.set_button(button, pushed=False)
     await controller_state.send()
@@ -267,7 +270,7 @@ async def _main(args):
             cnt = 0
             async for event in device.async_read_loop():
                 if event.type == ecodes.EV_SYN:
-                    await controller_state.send()
+                    lasttask = asyncio.ensure_future(sync_controller(controller_state))
                 if event.type == ecodes.EV_ABS:
                     if event.code == 0:
                         controller_state.l_stick_state.set_h(event.value//22+2048)
