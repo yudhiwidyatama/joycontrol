@@ -5,6 +5,7 @@ import asyncio
 import logging
 import os
 import evdev
+import time
 
 from evdev import ecodes
 from aioconsole import ainput
@@ -173,6 +174,9 @@ async def button_press(controller_state, button):
     controller_state.button_state.set_button(button)
     await controller_state.send()
 
+def button_set_state(controller_state, button, pushed):
+    controller_state.button_state.set_button(button, pushed)
+
 async def button_release(controller_state, button):
     controller_state.button_state.set_button(button, pushed=False)
     await controller_state.send()
@@ -262,23 +266,21 @@ async def _main(args):
             t1 = time.perf_counter()
             cnt = 0
             async for event in device.async_read_loop():
+                if event.type == ecodes.EV_SYN:
+                    await controller_state.send()
                 if event.type == ecodes.EV_ABS:
                     if event.code == 0:
                         controller_state.l_stick_state.set_h(event.value//16+2048)
-                        await controller_state.send()
                     elif event.code == 1:
                         controller_state.l_stick_state.set_v(-(event.value-15)//16+2047)
-                        await controller_state.send()
                     elif event.code == 3:
                         controller_state.r_stick_state.set_h(event.value//16+2048)
-                        await controller_state.send()
                     elif event.code == 4:
                         controller_state.r_stick_state.set_v(-(event.value-15)//16+2047)
-                        await controller_state.send()
                 elif event.type == ecodes.EV_KEY:
-                    logger.info(event.code)
-                    logger.info(' value ')
-                    logger.info(event.value)
+                    # logger.info(event.code)
+                    # logger.info(' value ')
+                    # logger.info(event.value)
                     if event.code == 304:
                         if event.value == 1:
                             await button_press(controller_state, 'b')
