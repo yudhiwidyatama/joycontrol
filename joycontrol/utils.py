@@ -3,7 +3,7 @@ import logging
 from contextlib import contextmanager
 
 import hid
-import sys
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ def create_error_check_callback(ignore=None):
                 pass
             except:
                 logger.error("Unhandled error, exiting ")
-                sys.exit("unhandled error")
+                os._exit(1)
         else:
             future.result()
     return callback

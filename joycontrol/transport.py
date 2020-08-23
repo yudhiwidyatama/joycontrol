@@ -2,6 +2,8 @@ import asyncio
 import logging
 import struct
 import time
+import os
+
 from typing import Any
 
 from joycontrol import utils
@@ -176,6 +178,8 @@ class L2CAP_Transport(asyncio.Transport):
         if not self._is_closing:
             # was not already closed
             self._is_closing = True
+            if self._read_thread is None:
+                os._exit(1)
             if self._read_thread.cancel():
                 # wait for reader to cancel
                 try:

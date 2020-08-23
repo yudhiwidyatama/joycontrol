@@ -178,7 +178,11 @@ def button_set_state(controller_state, button, event):
     controller_state.button_state.set_button(button, bool(event.value == 1))
 
 async def sync_controller(controller_state):
-    await controller_state.send()
+    try:
+        retval = await controller_state.send()
+    except:
+        logger.error(' exception when sending controller state ')
+        os._exit(1)
 
 async def button_release(controller_state, button):
     controller_state.button_state.set_button(button, pushed=False)
@@ -352,3 +356,4 @@ if __name__ == '__main__':
     loop.run_until_complete(
         _main(args)
     )
+
