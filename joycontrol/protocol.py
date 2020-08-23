@@ -206,14 +206,17 @@ class ControllerProtocol(BaseProtocol):
 
         except NotConnectedError as err:
             # Stop 0x30 input report mode if disconnected.
+            logger.error("Catched NotConnectedError")
             logger.error(err)
         finally:
             # cleanup
             self._input_report_mode = None
+            logger.error("cleaning up")
             # cancel the reader
             with suppress(asyncio.CancelledError, NotConnectedError):
                 if reader.cancel():
                     await reader
+            logger.error("cleaning up finished")
 
     async def report_received(self, data: Union[bytes, Text], addr: Tuple[str, int]) -> None:
         self._data_received.set()
